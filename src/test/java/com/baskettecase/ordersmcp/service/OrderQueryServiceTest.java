@@ -18,12 +18,12 @@ class OrderQueryServiceTest {
 
     @Test
     void testGetCustomerOrders() {
-        // Test with customer ID 1 (should exist from sample data)
-        CustomerOrderResponse response = orderQueryService.getCustomerOrders(1L);
+        // Test with customer ID 12345 (should exist from sample data)
+        CustomerOrderResponse response = orderQueryService.getCustomerOrders(12345L);
         
         assertNotNull(response);
         assertNotNull(response.getCustomer());
-        assertEquals(1L, response.getCustomer().getCustomerId());
+        assertEquals(12345L, response.getCustomer().getCustomerId());
         assertNotNull(response.getOrders());
         assertNotNull(response.getSummary());
         
@@ -35,18 +35,18 @@ class OrderQueryServiceTest {
     @Test
     void testGetOrderDetails() {
         // First get customer orders to find a valid order ID
-        CustomerOrderResponse customerResponse = orderQueryService.getCustomerOrders(1L);
+        CustomerOrderResponse customerResponse = orderQueryService.getCustomerOrders(12345L);
         assertNotNull(customerResponse);
         assertTrue(customerResponse.getOrders().size() > 0);
         
         Long orderId = customerResponse.getOrders().get(0).getOrderId();
         
         // Test getting order details
-        OrderDetailsResponse response = orderQueryService.getOrderDetails(1L, orderId);
+        OrderDetailsResponse response = orderQueryService.getOrderDetails(12345L, orderId);
         
         assertNotNull(response);
         assertNotNull(response.getCustomer());
-        assertEquals(1L, response.getCustomer().getCustomerId());
+        assertEquals(12345L, response.getCustomer().getCustomerId());
         assertNotNull(response.getOrder());
         assertEquals(orderId, response.getOrder().getOrderId());
         assertNotNull(response.getItems());
@@ -59,7 +59,7 @@ class OrderQueryServiceTest {
     void testGetCustomerOrdersWithInvalidId() {
         // Test with non-existent customer ID
         assertThrows(IllegalArgumentException.class, () -> {
-            orderQueryService.getCustomerOrders(999L);
+            orderQueryService.getCustomerOrders(99999L);
         });
     }
 
@@ -67,7 +67,7 @@ class OrderQueryServiceTest {
     void testGetOrderDetailsWithInvalidCustomerId() {
         // Test with non-existent customer ID
         assertThrows(IllegalArgumentException.class, () -> {
-            orderQueryService.getOrderDetails(999L, 1L);
+            orderQueryService.getOrderDetails(99999L, 1L);
         });
     }
 
@@ -75,7 +75,7 @@ class OrderQueryServiceTest {
     void testGetOrderDetailsWithInvalidOrderId() {
         // Test with valid customer but non-existent order
         assertThrows(IllegalArgumentException.class, () -> {
-            orderQueryService.getOrderDetails(1L, 999L);
+            orderQueryService.getOrderDetails(12345L, 99999L);
         });
     }
 
@@ -95,7 +95,7 @@ class OrderQueryServiceTest {
         });
         
         assertThrows(IllegalArgumentException.class, () -> {
-            orderQueryService.getOrderDetails(1L, null);
+            orderQueryService.getOrderDetails(12345L, null);
         });
     }
 } 

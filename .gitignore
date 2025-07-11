@@ -71,4 +71,5 @@ bin/
 *.trace.db
 
 # Test reports
-TEST-*.xml 
+TEST-*.xml release.sh
+.release-exec
