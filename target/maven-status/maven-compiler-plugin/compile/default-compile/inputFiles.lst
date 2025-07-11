@@ -1,0 +1,11 @@
+/Users/dbbaskette/Projects/ordersMCP/src/main/java/com/baskettecase/ordersmcp/OrdersMcpServerApplication.java
+/Users/dbbaskette/Projects/ordersMCP/src/main/java/com/baskettecase/ordersmcp/dto/CustomerOrderResponse.java
+/Users/dbbaskette/Projects/ordersMCP/src/main/java/com/baskettecase/ordersmcp/entity/Address.java
+/Users/dbbaskette/Projects/ordersMCP/src/main/java/com/baskettecase/ordersmcp/entity/Customer.java
+/Users/dbbaskette/Projects/ordersMCP/src/main/java/com/baskettecase/ordersmcp/entity/Order.java
+/Users/dbbaskette/Projects/ordersMCP/src/main/java/com/baskettecase/ordersmcp/entity/OrderDetail.java
+/Users/dbbaskette/Projects/ordersMCP/src/main/java/com/baskettecase/ordersmcp/entity/Product.java
+/Users/dbbaskette/Projects/ordersMCP/src/main/java/com/baskettecase/ordersmcp/mcp/CustomerOrderTool.java
+/Users/dbbaskette/Projects/ordersMCP/src/main/java/com/baskettecase/ordersmcp/repository/CustomerRepository.java
+/Users/dbbaskette/Projects/ordersMCP/src/main/java/com/baskettecase/ordersmcp/repository/OrderRepository.java
+/Users/dbbaskette/Projects/ordersMCP/src/main/java/com/baskettecase/ordersmcp/service/OrderQueryService.java
