@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "orders-server": {
+      "command": "node",
+      "args": ["/Users/dbbaskette/Projects/ordersMCP/mcp-bridge-simple.js"],
+      "description": "Orders MCP Server - Customer order queries and details",
+      "env": {
+        "DEBUG": "true"
+      }
+    }
+  }
+} 

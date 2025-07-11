@@ -1,5 +1,7 @@
 package com.baskettecase.ordersmcp.service;
 
+import com.baskettecase.ordersmcp.dto.CustomerOrderResponse;
+import com.baskettecase.ordersmcp.dto.OrderDetailsResponse;
 import com.baskettecase.ordersmcp.entity.Customer;
 import com.baskettecase.ordersmcp.entity.Order;
 import com.baskettecase.ordersmcp.repository.CustomerRepository;
@@ -11,11 +13,12 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
-import java.util.Optional;
 
 /**
- * Service for querying customer orders and related data.
- * Provides business logic for order queries used by the MCP server.
+ * Service class for handling MCP tool queries related to orders.
+ * This service provides the business logic for the two main MCP tools:
+ * 1. Get Customer Orders - returns list of orders for a customer
+ * 2. Get Order Details - returns detailed information about a specific order
  */
 @Service
 @Transactional(readOnly = true)
@@ -33,109 +36,123 @@ public class OrderQueryService {
     }
 
     /**
-     * Find customer by ID with all their orders and order details.
-     *
-     * @param customerId the customer ID to search for
-     * @return Optional containing the customer with orders if found
+     * Get customer orders - MCP Tool 1
+     * Returns a list of orders for a specific customer with summary information.
+     * 
+     * @param customerId The customer ID to get orders for
+     * @return CustomerOrderResponse containing customer info, orders list, and summary
+     * @throws IllegalArgumentException if customer ID is null or customer not found
      */
-    public Optional<Customer> findCustomerWithOrders(Long customerId) {
-        logger.debug("Finding customer with orders for customerId: {}", customerId);
+    public CustomerOrderResponse getCustomerOrders(Long customerId) {
+        logger.debug("Getting orders for customer ID: {}", customerId);
         
-        try {
-            Optional<Customer> customer = customerRepository.findByIdWithOrdersAndDetails(customerId);
-            
-            if (customer.isPresent()) {
-                logger.info("Found customer {} with {} orders", 
-                    customer.get().getFullName(), 
-                    customer.get().getOrders().size());
-            } else {
-                logger.warn("Customer not found for customerId: {}", customerId);
-            }
-            
-            return customer;
-        } catch (Exception e) {
-            logger.error("Error finding customer with orders for customerId: {}", customerId, e);
-            throw new RuntimeException("Failed to retrieve customer orders", e);
+        // Validate input
+        if (customerId == null) {
+            throw new IllegalArgumentException("Customer ID cannot be null");
+        }
+        
+        // Validate customer exists
+        Customer customer = customerRepository.findByCustomerId(customerId)
+                .orElseThrow(() -> new IllegalArgumentException("Customer not found with ID: " + customerId));
+        
+        // Get orders for customer
+        List<Order> orders = orderRepository.findByCustomerCustomerId(customerId);
+        
+        logger.debug("Found {} orders for customer ID: {}", orders.size(), customerId);
+        
+        // Return response DTO
+        return new CustomerOrderResponse(customer, orders);
+    }
+
+    /**
+     * Get order details - MCP Tool 2
+     * Returns detailed information about a specific order including line items.
+     * 
+     * @param customerId The customer ID (for validation)
+     * @param orderId The order ID to get details for
+     * @return OrderDetailsResponse containing detailed order information
+     * @throws IllegalArgumentException if parameters are null, customer not found, or order not found/not owned by customer
+     */
+    public OrderDetailsResponse getOrderDetails(Long customerId, Long orderId) {
+        logger.debug("Getting order details for customer ID: {}, order ID: {}", customerId, orderId);
+        
+        // Validate input
+        if (customerId == null) {
+            throw new IllegalArgumentException("Customer ID cannot be null");
+        }
+        if (orderId == null) {
+            throw new IllegalArgumentException("Order ID cannot be null");
+        }
+        
+        // Validate customer exists
+        Customer customer = customerRepository.findByCustomerId(customerId)
+                .orElseThrow(() -> new IllegalArgumentException("Customer not found with ID: " + customerId));
+        
+        // Get order with details (validates order belongs to customer)
+        Order order = orderRepository.findByOrderIdAndCustomerIdWithDetails(orderId, customerId)
+                .orElseThrow(() -> new IllegalArgumentException(
+                        "Order not found with ID: " + orderId + " for customer ID: " + customerId));
+        
+        logger.debug("Found order {} for customer ID: {} with {} line items", 
+                order.getOrderNumber(), customerId, order.getOrderDetails().size());
+        
+        // Return response DTO
+        return new OrderDetailsResponse(customer, order);
+    }
+
+    /**
+     * Validate that a customer exists.
+     * 
+     * @param customerId The customer ID to validate
+     * @throws IllegalArgumentException if customer ID is null or customer not found
+     */
+    private void validateCustomer(Long customerId) {
+        if (customerId == null) {
+            throw new IllegalArgumentException("Customer ID cannot be null");
+        }
+        
+        if (!customerRepository.findByCustomerId(customerId).isPresent()) {
+            throw new IllegalArgumentException("Customer not found with ID: " + customerId);
         }
     }
 
     /**
-     * Find customer by email with all their orders and order details.
-     *
-     * @param email the customer email to search for
-     * @return Optional containing the customer with orders if found
+     * Validate that an order exists and belongs to the specified customer.
+     * 
+     * @param customerId The customer ID
+     * @param orderId The order ID
+     * @throws IllegalArgumentException if order not found or doesn't belong to customer
      */
-    public Optional<Customer> findCustomerWithOrdersByEmail(String email) {
-        logger.debug("Finding customer with orders for email: {}", email);
+    private void validateOrder(Long customerId, Long orderId) {
+        if (orderId == null) {
+            throw new IllegalArgumentException("Order ID cannot be null");
+        }
         
-        try {
-            Optional<Customer> customerOpt = customerRepository.findByEmail(email);
-            
-            if (customerOpt.isPresent()) {
-                Customer customer = customerOpt.get();
-                List<Order> orders = orderRepository.findByCustomerIdWithDetails(customer.getCustomerId());
-                customer.setOrders(orders);
-                
-                logger.info("Found customer {} with {} orders", 
-                    customer.getFullName(), 
-                    orders.size());
-                
-                return Optional.of(customer);
-            } else {
-                logger.warn("Customer not found for email: {}", email);
-                return Optional.empty();
-            }
-        } catch (Exception e) {
-            logger.error("Error finding customer with orders for email: {}", email, e);
-            throw new RuntimeException("Failed to retrieve customer orders", e);
+        if (!orderRepository.findByOrderIdAndCustomerCustomerId(orderId, customerId).isPresent()) {
+            throw new IllegalArgumentException(
+                    "Order not found with ID: " + orderId + " for customer ID: " + customerId);
         }
     }
 
     /**
-     * Get all orders for a customer by customer ID.
-     *
-     * @param customerId the customer ID to search for
-     * @return List of orders for the customer
+     * Get the count of orders for a customer.
+     * 
+     * @param customerId The customer ID
+     * @return Number of orders for the customer
      */
-    public List<Order> getCustomerOrders(Long customerId) {
-        logger.debug("Getting orders for customerId: {}", customerId);
-        
-        try {
-            List<Order> orders = orderRepository.findByCustomerIdWithDetails(customerId);
-            logger.info("Found {} orders for customerId: {}", orders.size(), customerId);
-            return orders;
-        } catch (Exception e) {
-            logger.error("Error getting orders for customerId: {}", customerId, e);
-            throw new RuntimeException("Failed to retrieve customer orders", e);
-        }
+    public long getOrderCountForCustomer(Long customerId) {
+        validateCustomer(customerId);
+        return orderRepository.findByCustomerCustomerId(customerId).size();
     }
 
     /**
-     * Check if a customer exists by ID.
-     *
-     * @param customerId the customer ID to check
-     * @return true if customer exists, false otherwise
+     * Check if a customer has any orders.
+     * 
+     * @param customerId The customer ID
+     * @return true if customer has orders, false otherwise
      */
-    public boolean customerExists(Long customerId) {
-        return customerRepository.existsById(customerId);
-    }
-
-    /**
-     * Get customer count.
-     *
-     * @return total number of customers
-     */
-    public long getCustomerCount() {
-        return customerRepository.count();
-    }
-
-    /**
-     * Get order count for a customer.
-     *
-     * @param customerId the customer ID to count orders for
-     * @return number of orders for the customer
-     */
-    public long getCustomerOrderCount(Long customerId) {
-        return orderRepository.countByCustomerCustomerId(customerId);
+    public boolean customerHasOrders(Long customerId) {
+        validateCustomer(customerId);
+        return !orderRepository.findByCustomerCustomerId(customerId).isEmpty();
     }
 } 

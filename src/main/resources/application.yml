@@ -1,13 +1,41 @@
-server:
-  port: 8081
-
 spring:
+  application:
+    name: orders-mcp-server
+  
+  profiles:
+    active: local
+  
   ai:
     mcp:
       server:
-        sse: true
-        stdio: false
-        tools:
-          enabled: true
+        name: orders-mcp-server
+        version: 1.0.0
+        type: SYNC
+        instructions: "This server provides order query tools for customer order management. Use getCustomerOrders to get a list of orders for a customer, and getOrderDetails to get detailed information about a specific order."
+        capabilities:
+          tool: true
+          resource: false
+          prompt: false
+          completion: false
+        sse-message-endpoint: /mcp/message
+        sse-endpoint: /sse
 
-# Database and logging config as needed (leave as is) 
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+    baseline-on-migrate: true
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+  endpoint:
+    health:
+      show-details: when-authorized
+
+logging:
+  level:
+    com.baskettecase.ordersmcp: DEBUG
+    org.springframework.ai: DEBUG
+    org.flywaydb: INFO 

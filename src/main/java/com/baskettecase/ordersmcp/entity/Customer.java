@@ -5,53 +5,47 @@ import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.List;
 
-/**
- * Customer entity representing e-commerce customers.
- * Contains customer information and relationships to orders and addresses.
- */
 @Entity
 @Table(name = "customers")
 public class Customer {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "customer_id")
     private Long customerId;
 
-    @NotBlank(message = "Email is required")
-    @Email(message = "Email should be valid")
+    @Email
+    @NotBlank
+    @Size(max = 255)
     @Column(name = "email", unique = true, nullable = false)
     private String email;
 
-    @NotBlank(message = "First name is required")
-    @Size(max = 100, message = "First name cannot exceed 100 characters")
+    @NotBlank
+    @Size(max = 100)
     @Column(name = "first_name", nullable = false)
     private String firstName;
 
-    @NotBlank(message = "Last name is required")
-    @Size(max = 100, message = "Last name cannot exceed 100 characters")
+    @NotBlank
+    @Size(max = 100)
     @Column(name = "last_name", nullable = false)
     private String lastName;
 
-    @Size(max = 20, message = "Phone number cannot exceed 20 characters")
+    @Size(max = 20)
     @Column(name = "phone")
     private String phone;
 
-    @Column(name = "created_at", nullable = false, updatable = false)
+    @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
 
     @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
 
-    // Relationships
     @OneToMany(mappedBy = "customer", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    private List<Order> orders = new ArrayList<>();
+    private List<Order> orders;
 
     @OneToMany(mappedBy = "customer", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    private List<Address> addresses = new ArrayList<>();
+    private List<Address> addresses;
 
     // Constructors
     public Customer() {
@@ -59,11 +53,12 @@ public class Customer {
         this.updatedAt = LocalDateTime.now();
     }
 
-    public Customer(String email, String firstName, String lastName) {
+    public Customer(String email, String firstName, String lastName, String phone) {
         this();
         this.email = email;
         this.firstName = firstName;
         this.lastName = lastName;
+        this.phone = phone;
     }
 
     // Getters and Setters
@@ -157,6 +152,7 @@ public class Customer {
                 ", firstName='" + firstName + '\'' +
                 ", lastName='" + lastName + '\'' +
                 ", phone='" + phone + '\'' +
+                ", createdAt=" + createdAt +
                 '}';
     }
 } 

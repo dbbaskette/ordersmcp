@@ -1,30 +1,25 @@
 spring:
-  # Cloud Foundry Database Configuration
   datasource:
-    url: ${DATABASE_URL}
-    username: ${DATABASE_USERNAME}
-    password: ${DATABASE_PASSWORD}
+    url: ${vcap.services.sales-db.credentials.uri}
     driver-class-name: org.postgresql.Driver
   
-  # JPA Configuration for PostgreSQL
   jpa:
     hibernate:
-      ddl-auto: none # Schema and data must be loaded externally
+      ddl-auto: validate
     show-sql: false
     properties:
       hibernate:
         dialect: org.hibernate.dialect.PostgreSQLDialect
-        format_sql: false
+  
+  flyway:
+    enabled: true
+    baseline-on-migrate: true
 
-# Production Logging
+server:
+  port: ${PORT:8080}
+
 logging:
   level:
-    com.baskettecase.ordersmcp: INFO
-    org.springframework.ai.mcp: INFO
+    org.springframework.web: INFO
     org.hibernate.SQL: WARN
-  pattern:
-    console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
-
-# Cloud Foundry specific settings
-server:
-  port: ${PORT:8080} 
+    com.baskettecase.ordersmcp: INFO 

@@ -9,16 +9,11 @@ import jakarta.validation.constraints.Size;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
-/**
- * OrderDetail entity representing individual line items in an order.
- * Contains denormalized product data for performance and historical accuracy.
- */
 @Entity
 @Table(name = "order_details")
 public class OrderDetail {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "detail_id")
     private Long detailId;
 
@@ -30,40 +25,40 @@ public class OrderDetail {
     @JoinColumn(name = "product_id", nullable = false)
     private Product product;
 
-    @NotBlank(message = "Product name is required")
-    @Size(max = 255, message = "Product name cannot exceed 255 characters")
+    @NotBlank
+    @Size(max = 255)
     @Column(name = "product_name", nullable = false)
     private String productName;
 
-    @NotBlank(message = "Product SKU is required")
-    @Size(max = 100, message = "Product SKU cannot exceed 100 characters")
+    @NotBlank
+    @Size(max = 100)
     @Column(name = "product_sku", nullable = false)
     private String productSku;
 
     @Column(name = "product_description", columnDefinition = "TEXT")
     private String productDescription;
 
-    @NotNull(message = "Quantity is required")
-    @Min(value = 1, message = "Quantity must be at least 1")
+    @NotNull
+    @Min(value = 1)
     @Column(name = "quantity", nullable = false)
-    private Integer quantity = 1;
+    private Integer quantity;
 
-    @NotNull(message = "Unit price is required")
-    @DecimalMin(value = "0.0", inclusive = false, message = "Unit price must be greater than 0")
+    @NotNull
+    @DecimalMin(value = "0.0", inclusive = false)
     @Column(name = "unit_price", nullable = false, precision = 10, scale = 2)
     private BigDecimal unitPrice;
 
-    @NotNull(message = "Discount amount is required")
-    @DecimalMin(value = "0.0", inclusive = true, message = "Discount amount must be 0 or greater")
+    @NotNull
+    @DecimalMin(value = "0.0", inclusive = true)
     @Column(name = "discount_amount", nullable = false, precision = 10, scale = 2)
     private BigDecimal discountAmount = BigDecimal.ZERO;
 
-    @NotNull(message = "Line total is required")
-    @DecimalMin(value = "0.0", inclusive = false, message = "Line total must be greater than 0")
+    @NotNull
+    @DecimalMin(value = "0.0", inclusive = false)
     @Column(name = "line_total", nullable = false, precision = 10, scale = 2)
     private BigDecimal lineTotal;
 
-    @Column(name = "created_at", nullable = false, updatable = false)
+    @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
 
     // Constructors
@@ -71,14 +66,15 @@ public class OrderDetail {
         this.createdAt = LocalDateTime.now();
     }
 
-    public OrderDetail(Product product, Integer quantity) {
+    public OrderDetail(Order order, Product product, Integer quantity) {
         this();
+        this.order = order;
         this.product = product;
         this.productName = product.getName();
         this.productSku = product.getSku();
         this.productDescription = product.getDescription();
         this.quantity = quantity;
-        this.unitPrice = product.getPrice();
+        this.unitPrice = product.getEffectivePrice();
         calculateLineTotal();
     }
 
@@ -184,6 +180,10 @@ public class OrderDetail {
 
     public BigDecimal getSubtotalBeforeDiscount() {
         return unitPrice.multiply(BigDecimal.valueOf(quantity));
+    }
+
+    public boolean hasDiscount() {
+        return discountAmount != null && discountAmount.compareTo(BigDecimal.ZERO) > 0;
     }
 
     @Override

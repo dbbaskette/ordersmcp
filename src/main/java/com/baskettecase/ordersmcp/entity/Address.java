@@ -5,15 +5,11 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import java.time.LocalDateTime;
 
-/**
- * Address entity representing customer shipping and billing addresses.
- */
 @Entity
 @Table(name = "addresses")
 public class Address {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "address_id")
     private Long addressId;
 
@@ -25,62 +21,63 @@ public class Address {
     @Column(name = "address_type", nullable = false)
     private AddressType addressType;
 
-    @NotBlank(message = "First name is required")
-    @Size(max = 100, message = "First name cannot exceed 100 characters")
+    @NotBlank
+    @Size(max = 100)
     @Column(name = "first_name", nullable = false)
     private String firstName;
 
-    @NotBlank(message = "Last name is required")
-    @Size(max = 100, message = "Last name cannot exceed 100 characters")
+    @NotBlank
+    @Size(max = 100)
     @Column(name = "last_name", nullable = false)
     private String lastName;
 
-    @Size(max = 255, message = "Company name cannot exceed 255 characters")
+    @Size(max = 255)
     @Column(name = "company")
     private String company;
 
-    @NotBlank(message = "Address line 1 is required")
-    @Size(max = 255, message = "Address line 1 cannot exceed 255 characters")
+    @NotBlank
+    @Size(max = 255)
     @Column(name = "address_line1", nullable = false)
     private String addressLine1;
 
-    @Size(max = 255, message = "Address line 2 cannot exceed 255 characters")
+    @Size(max = 255)
     @Column(name = "address_line2")
     private String addressLine2;
 
-    @NotBlank(message = "City is required")
-    @Size(max = 100, message = "City cannot exceed 100 characters")
+    @NotBlank
+    @Size(max = 100)
     @Column(name = "city", nullable = false)
     private String city;
 
-    @NotBlank(message = "State is required")
-    @Size(max = 100, message = "State cannot exceed 100 characters")
+    @NotBlank
+    @Size(max = 100)
     @Column(name = "state", nullable = false)
     private String state;
 
-    @NotBlank(message = "Postal code is required")
-    @Size(max = 20, message = "Postal code cannot exceed 20 characters")
+    @NotBlank
+    @Size(max = 20)
     @Column(name = "postal_code", nullable = false)
     private String postalCode;
 
-    @Size(max = 100, message = "Country cannot exceed 100 characters")
+    @NotBlank
+    @Size(max = 100)
     @Column(name = "country", nullable = false)
-    private String country = "USA";
+    private String country;
 
-    @Size(max = 20, message = "Phone number cannot exceed 20 characters")
+    @Size(max = 20)
     @Column(name = "phone")
     private String phone;
 
     @Column(name = "is_default", nullable = false)
     private Boolean isDefault = false;
 
-    @Column(name = "created_at", nullable = false, updatable = false)
+    @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
 
     @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
 
-    // Address Type Enum
+    // Address type enum
     public enum AddressType {
         SHIPPING, BILLING, BOTH
     }
@@ -227,18 +224,12 @@ public class Address {
 
     public String getFullAddress() {
         StringBuilder sb = new StringBuilder();
-        if (company != null && !company.isEmpty()) {
-            sb.append(company).append("\n");
-        }
-        sb.append(firstName).append(" ").append(lastName).append("\n");
         sb.append(addressLine1);
-        if (addressLine2 != null && !addressLine2.isEmpty()) {
-            sb.append("\n").append(addressLine2);
+        if (addressLine2 != null && !addressLine2.trim().isEmpty()) {
+            sb.append(", ").append(addressLine2);
         }
-        sb.append("\n").append(city).append(", ").append(state).append(" ").append(postalCode);
-        if (!"USA".equals(country)) {
-            sb.append("\n").append(country);
-        }
+        sb.append(", ").append(city).append(", ").append(state).append(" ").append(postalCode);
+        sb.append(", ").append(country);
         return sb.toString();
     }
 
@@ -256,6 +247,8 @@ public class Address {
                 ", lastName='" + lastName + '\'' +
                 ", city='" + city + '\'' +
                 ", state='" + state + '\'' +
+                ", postalCode='" + postalCode + '\'' +
+                ", country='" + country + '\'' +
                 '}';
     }
 } 

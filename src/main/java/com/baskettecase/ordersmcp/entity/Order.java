@@ -7,19 +7,13 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.List;
 
-/**
- * Order entity representing customer orders in the e-commerce system.
- * Contains order information, relationships to customers, addresses, and order details.
- */
 @Entity
 @Table(name = "orders")
 public class Order {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "order_id")
     private Long orderId;
 
@@ -27,38 +21,37 @@ public class Order {
     @JoinColumn(name = "customer_id", nullable = false)
     private Customer customer;
 
-    @NotBlank(message = "Order number is required")
-    @Size(max = 50, message = "Order number cannot exceed 50 characters")
+    @NotBlank
+    @Size(max = 50)
     @Column(name = "order_number", unique = true, nullable = false)
     private String orderNumber;
 
-    @NotNull(message = "Order date is required")
     @Column(name = "order_date", nullable = false)
     private LocalDateTime orderDate;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false)
-    private OrderStatus status = OrderStatus.PENDING;
+    private OrderStatus status;
 
-    @NotNull(message = "Subtotal is required")
-    @DecimalMin(value = "0.0", inclusive = false, message = "Subtotal must be greater than 0")
+    @NotNull
+    @DecimalMin(value = "0.0", inclusive = true)
     @Column(name = "subtotal", nullable = false, precision = 10, scale = 2)
-    private BigDecimal subtotal = BigDecimal.ZERO;
+    private BigDecimal subtotal;
 
-    @NotNull(message = "Tax amount is required")
-    @DecimalMin(value = "0.0", inclusive = true, message = "Tax amount must be 0 or greater")
+    @NotNull
+    @DecimalMin(value = "0.0", inclusive = true)
     @Column(name = "tax_amount", nullable = false, precision = 10, scale = 2)
     private BigDecimal taxAmount = BigDecimal.ZERO;
 
-    @NotNull(message = "Shipping amount is required")
-    @DecimalMin(value = "0.0", inclusive = true, message = "Shipping amount must be 0 or greater")
+    @NotNull
+    @DecimalMin(value = "0.0", inclusive = true)
     @Column(name = "shipping_amount", nullable = false, precision = 10, scale = 2)
     private BigDecimal shippingAmount = BigDecimal.ZERO;
 
-    @NotNull(message = "Total amount is required")
-    @DecimalMin(value = "0.0", inclusive = false, message = "Total amount must be greater than 0")
+    @NotNull
+    @DecimalMin(value = "0.0", inclusive = true)
     @Column(name = "total_amount", nullable = false, precision = 10, scale = 2)
-    private BigDecimal totalAmount = BigDecimal.ZERO;
+    private BigDecimal totalAmount;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "shipping_address_id")
@@ -68,32 +61,33 @@ public class Order {
     @JoinColumn(name = "billing_address_id")
     private Address billingAddress;
 
-    @Size(max = 50, message = "Payment method cannot exceed 50 characters")
-    @Column(name = "payment_method")
+    @NotBlank
+    @Size(max = 50)
+    @Column(name = "payment_method", nullable = false)
     private String paymentMethod;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "payment_status", nullable = false)
-    private PaymentStatus paymentStatus = PaymentStatus.PENDING;
+    private PaymentStatus paymentStatus;
 
     @Column(name = "notes", columnDefinition = "TEXT")
     private String notes;
 
-    @Column(name = "created_at", nullable = false, updatable = false)
+    @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
 
     @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
 
-    // Relationships
     @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    private List<OrderDetail> orderDetails = new ArrayList<>();
+    private List<OrderDetail> orderDetails;
 
-    // Enums
+    // Order status enum
     public enum OrderStatus {
         PENDING, CONFIRMED, PROCESSING, SHIPPED, DELIVERED, CANCELLED
     }
 
+    // Payment status enum
     public enum PaymentStatus {
         PENDING, PAID, FAILED, REFUNDED
     }
@@ -103,12 +97,14 @@ public class Order {
         this.orderDate = LocalDateTime.now();
         this.createdAt = LocalDateTime.now();
         this.updatedAt = LocalDateTime.now();
+        this.status = OrderStatus.PENDING;
+        this.paymentStatus = PaymentStatus.PENDING;
     }
 
-    public Order(String orderNumber, Customer customer) {
+    public Order(Customer customer, String orderNumber) {
         this();
-        this.orderNumber = orderNumber;
         this.customer = customer;
+        this.orderNumber = orderNumber;
     }
 
     // Getters and Setters
@@ -249,22 +245,22 @@ public class Order {
     }
 
     // Utility methods
-    public void addOrderDetail(OrderDetail orderDetail) {
-        orderDetails.add(orderDetail);
-        orderDetail.setOrder(this);
-    }
-
-    public void removeOrderDetail(OrderDetail orderDetail) {
-        orderDetails.remove(orderDetail);
-        orderDetail.setOrder(null);
-    }
-
     public void calculateTotals() {
-        this.subtotal = orderDetails.stream()
-                .map(OrderDetail::getLineTotal)
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
-        
-        this.totalAmount = this.subtotal.add(this.taxAmount).add(this.shippingAmount);
+        if (orderDetails != null && !orderDetails.isEmpty()) {
+            this.subtotal = orderDetails.stream()
+                    .map(OrderDetail::getLineTotal)
+                    .reduce(BigDecimal.ZERO, BigDecimal::add);
+            this.totalAmount = subtotal.add(taxAmount).add(shippingAmount);
+        }
+    }
+
+    public int getItemCount() {
+        return orderDetails != null ? orderDetails.size() : 0;
+    }
+
+    public int getTotalQuantity() {
+        return orderDetails != null ? 
+                orderDetails.stream().mapToInt(OrderDetail::getQuantity).sum() : 0;
     }
 
     @PreUpdate
@@ -280,6 +276,7 @@ public class Order {
                 ", orderDate=" + orderDate +
                 ", status=" + status +
                 ", totalAmount=" + totalAmount +
+                ", paymentStatus=" + paymentStatus +
                 '}';
     }
 } 

@@ -1,0 +1,14 @@
+{
+  "mcpServers": {
+    "orders-mcp-server": {
+      "command": "curl",
+      "args": [
+        "-N",
+        "-H",
+        "Accept: text/event-stream",
+        "http://localhost:8080/sse"
+      ],
+      "description": "Orders MCP Server - Customer order queries and details"
+    }
+  }
+} 

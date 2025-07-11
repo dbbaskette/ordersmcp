@@ -1,54 +1,39 @@
 package com.baskettecase.ordersmcp.mcp;
 
 import com.baskettecase.ordersmcp.dto.CustomerOrderResponse;
-import com.baskettecase.ordersmcp.entity.Customer;
+import com.baskettecase.ordersmcp.dto.OrderDetailsResponse;
 import com.baskettecase.ordersmcp.service.OrderQueryService;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
-
-import java.util.Optional;
+import org.springframework.ai.tool.annotation.Tool;
+import org.springframework.stereotype.Service;
 
 /**
- * MCP Tool for querying customer orders.
+ * MCP Tools service for customer order queries.
+ * Following Spring AI MCP Server documentation pattern using @Tool annotations.
  */
-@Component
+@Service
 public class CustomerOrderTool {
-    private static final Logger logger = LoggerFactory.getLogger(CustomerOrderTool.class);
-    @Autowired
-    private OrderQueryService orderQueryService;
+
+    private final OrderQueryService orderQueryService;
+
+    public CustomerOrderTool(OrderQueryService orderQueryService) {
+        this.orderQueryService = orderQueryService;
+    }
 
     /**
-     * Query customer orders by customer ID.
-     * 
-     * @param customerId The customer ID to query
-     * @return JSON string with customer order information
+     * MCP Tool 1: Get Customer Orders
+     * Returns a list of orders for a specific customer with summary information.
      */
-    public String queryCustomerOrders(Long customerId) {
-        logger.info("Querying customer orders for customer ID: {}", customerId);
-        
-        if (customerId == null) {
-            return "{\"success\": false, \"error\": \"Customer ID is required\", \"customerId\": null}";
-        }
+    @Tool(description = "Get all orders for a specific customer. Returns customer information, list of orders, and summary statistics.")
+    public CustomerOrderResponse getCustomerOrders(Long customerId) {
+        return orderQueryService.getCustomerOrders(customerId);
+    }
 
-        try {
-            Optional<Customer> customerOpt = orderQueryService.findCustomerWithOrders(customerId);
-            
-            if (customerOpt.isPresent()) {
-                Customer customer = customerOpt.get();
-                CustomerOrderResponse response = new CustomerOrderResponse(customer);
-                return "{\"success\": true, \"customerId\": " + customerId + 
-                       ", \"fullName\": \"" + customer.getFullName() + "\"" +
-                       ", \"email\": \"" + customer.getEmail() + "\"" +
-                       ", \"orderCount\": " + customer.getOrders().size() +
-                       ", \"data\": " + response.toString() + "}";
-            } else {
-                return "{\"success\": false, \"error\": \"Customer not found\", \"customerId\": " + customerId + "}";
-            }
-        } catch (Exception e) {
-            logger.error("Error querying customer orders for customer ID: {}", customerId, e);
-            return "{\"success\": false, \"error\": \"Internal server error\", \"customerId\": " + customerId + "}";
-        }
+    /**
+     * MCP Tool 2: Get Order Details
+     * Returns detailed information about a specific order including line items.
+     */
+    @Tool(description = "Get detailed information about a specific order including line items, addresses, and pricing breakdown.")
+    public OrderDetailsResponse getOrderDetails(Long customerId, Long orderId) {
+        return orderQueryService.getOrderDetails(customerId, orderId);
     }
 } 

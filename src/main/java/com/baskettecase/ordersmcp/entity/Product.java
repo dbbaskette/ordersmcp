@@ -2,32 +2,27 @@ package com.baskettecase.ordersmcp.entity;
 
 import jakarta.persistence.*;
 import jakarta.validation.constraints.DecimalMin;
-import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
-/**
- * Product entity representing items in the e-commerce catalog.
- */
 @Entity
 @Table(name = "products")
 public class Product {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "product_id")
     private Long productId;
 
-    @NotBlank(message = "SKU is required")
-    @Size(max = 100, message = "SKU cannot exceed 100 characters")
+    @NotBlank
+    @Size(max = 100)
     @Column(name = "sku", unique = true, nullable = false)
     private String sku;
 
-    @NotBlank(message = "Product name is required")
-    @Size(max = 255, message = "Product name cannot exceed 255 characters")
+    @NotBlank
+    @Size(max = 255)
     @Column(name = "name", nullable = false)
     private String name;
 
@@ -37,24 +32,22 @@ public class Product {
     @Column(name = "category_id")
     private Long categoryId;
 
-    @NotNull(message = "Price is required")
-    @DecimalMin(value = "0.0", inclusive = false, message = "Price must be greater than 0")
+    @NotNull
+    @DecimalMin(value = "0.0", inclusive = false)
     @Column(name = "price", nullable = false, precision = 10, scale = 2)
     private BigDecimal price;
 
-    @DecimalMin(value = "0.0", inclusive = true, message = "Sale price must be 0 or greater")
+    @DecimalMin(value = "0.0", inclusive = false)
     @Column(name = "sale_price", precision = 10, scale = 2)
     private BigDecimal salePrice;
 
-    @NotNull(message = "Stock quantity is required")
-    @Min(value = 0, message = "Stock quantity must be 0 or greater")
     @Column(name = "stock_quantity", nullable = false)
     private Integer stockQuantity = 0;
 
     @Column(name = "is_active", nullable = false)
     private Boolean isActive = true;
 
-    @Column(name = "created_at", nullable = false, updatable = false)
+    @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
 
     @Column(name = "updated_at", nullable = false)
@@ -66,10 +59,11 @@ public class Product {
         this.updatedAt = LocalDateTime.now();
     }
 
-    public Product(String sku, String name, BigDecimal price) {
+    public Product(String sku, String name, String description, BigDecimal price) {
         this();
         this.sku = sku;
         this.name = name;
+        this.description = description;
         this.price = price;
     }
 
@@ -163,20 +157,16 @@ public class Product {
     }
 
     // Utility methods
-    public BigDecimal getCurrentPrice() {
-        return salePrice != null && salePrice.compareTo(BigDecimal.ZERO) > 0 ? salePrice : price;
+    public BigDecimal getEffectivePrice() {
+        return salePrice != null ? salePrice : price;
     }
 
     public boolean isOnSale() {
-        return salePrice != null && salePrice.compareTo(BigDecimal.ZERO) > 0 && salePrice.compareTo(price) < 0;
+        return salePrice != null && salePrice.compareTo(price) < 0;
     }
 
     public boolean isInStock() {
-        return stockQuantity > 0;
-    }
-
-    public boolean hasStock(int quantity) {
-        return stockQuantity >= quantity;
+        return stockQuantity != null && stockQuantity > 0;
     }
 
     @PreUpdate
@@ -191,7 +181,9 @@ public class Product {
                 ", sku='" + sku + '\'' +
                 ", name='" + name + '\'' +
                 ", price=" + price +
+                ", salePrice=" + salePrice +
                 ", stockQuantity=" + stockQuantity +
+                ", isActive=" + isActive +
                 '}';
     }
 } 

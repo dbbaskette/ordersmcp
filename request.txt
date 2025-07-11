@@ -1,0 +1,24 @@
+# ordersmcp
+
+## Request Summary
+Build a Spring AI based MCP Server that:
+- offers 2 querie as tools
+   - takes customer id as input
+      - Queries orders tbale and returns list of order ids
+   - Takes a customer ID and order id as input
+      - Queries orders table joined with order_details table and returns the details of the order
+- Runs on Cloud Foundry with standalone mode for testing
+- CF version will be bound to a postgres db called sales-db, local version should use H2
+- Use Spring Data so actual DB type doesn't matter
+- Uses specified versions from versions.txt
+- Uses WebMVC Server Transport with SSE following these docs https://docs.spring.io/spring-ai/reference/api/mcp/mcp-server-boot-starter-docs.html
+- Uses Spring AI Docs for guidance 
+   - https://docs.spring.io/spring-ai/reference/api/mcp/mcp-overview.html
+   - https://docs.spring.io/spring-ai/reference/index.html
+- This project will be part of a demo so I need you to automate the building of the schemma.  Design the tables needed in a typical way based on the requirements
+- provide a way to run and test the MCP Server locally
+- Provide scripts to load sample data with at least 25 customers, varying numbers of orders per person, and varying number of items in an order.
+- Develop a thourough, step by step implementation plan, then ask follow-up questions for clarification if you need it
+- Document your plan 
+
+
